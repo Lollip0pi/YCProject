@@ -52,6 +52,13 @@ namespace AAAPI.Services
         {
             try
             {
+                // 檢核帳號申請是否已重複
+                var checkUserAcct = await _AuthAPIDataContext.UserInfos.Where(m => m.UserAcct == rqObj.UserAcct && m.Status == "1").FirstOrDefaultAsync();
+                if(checkUserAcct != null)
+                {
+                    throw new APISysErrorException(ApiStatusCode.ERR_USERID_EXISTED);
+                }
+
                 UserInfo userData = new UserInfo();
                 var insertData = _Mapper.Map<RegisterRq, UserInfo>(rqObj);
                 insertData.UserGuid = Guid.NewGuid();
