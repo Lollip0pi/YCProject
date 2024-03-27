@@ -2,6 +2,7 @@
 using AuthAPI.Interfaces;
 using CommonModule.DTOs;
 using DTOsModule.DTOs.AuthAPI.Auth;
+using DTOsModule.DTOs.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Module.CommonModule.Controllers;
@@ -94,7 +95,7 @@ namespace AuthAPI.Controllers
         /// <param name="rqObj"></param>
         /// <returns></returns>
         [AllowAnonymous]
-        [HttpPost("login")]
+        [HttpPost("Login")]
         public async Task<JsonResponse<LoginRs>> Login([Bind] LoginRq rqObj)
         {
             string statusCode = ApiStatusCode.ERR_EXCEPTION;
@@ -129,6 +130,55 @@ namespace AuthAPI.Controllers
                 _logger.LogError(e, "Login Error");
                 statusDesc = e.Message;
                 return GetJsonResult<LoginRs>(ApiStatusCode.ERR_EXCEPTION);
+            }
+            finally
+            {
+                // 寫 TransactionLog
+            }
+
+        }
+        #endregion
+
+        #region Revoked, 註銷
+        /// <summary>
+        /// 註銷<br/>
+        /// </summary>
+        /// <remarks>
+        /// ==========================================================================<br/>
+        /// ==========================================================================<br/>
+        /// </remarks>
+        /// <param name="rqObj"></param>
+        /// <returns></returns>
+        [Authorize(Roles = "VerifiedUser")]
+        [HttpPost("Revoked")]
+        public async Task<JsonResponse> Revoke()
+        {
+            string statusCode = ApiStatusCode.ERR_EXCEPTION;
+            string statusDesc = "";
+            string prcDt = DateTime.Now.ToString("yyyy/MM/dd hh:mm:ss");
+            BaseApiParam headParam = base.ApiHeadParam;
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    statusCode = ApiStatusCode.ERR_DATA_VALIDATE;
+                    return GetJsonResult(ApiStatusCode.ERR_DATA_VALIDATE);
+                }
+
+                await _IAuthService.Revoked(headParam.UserGuid);
+                statusCode = ApiStatusCode.SUCCESS;
+
+                return GetJsonResult(statusCode);
+            }
+            catch (APISysErrorException ASErr)
+            {
+                return GetJsonResult(ASErr.StatusCode);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Revoked Error");
+                statusDesc = e.Message;
+                return GetJsonResult(ApiStatusCode.ERR_EXCEPTION);
             }
             finally
             {

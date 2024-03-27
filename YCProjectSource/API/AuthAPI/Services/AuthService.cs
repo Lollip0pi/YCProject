@@ -115,7 +115,8 @@ namespace AAAPI.Services
                     Subject = new ClaimsIdentity(new Claim[]
                     {
                      new Claim("UserName", userInfo.UserName),
-                     new Claim("UserGuid", userInfo.UserGuid.ToString())
+                     new Claim("UserGuid", userInfo.UserGuid.ToString()),
+                     new Claim(ClaimTypes.Role, "VerifiedUser")
                     }),
                     Issuer = _authModuleSetting.Value.TokenIssuer,
                     Audience = _authModuleSetting.Value.TokenAudience,
@@ -127,6 +128,29 @@ namespace AAAPI.Services
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 result.AccessToken = tokenHandler.WriteToken(token);
                 #endregion 組登入票
+
+                #region 更新登入狀態
+                var userLogin = await _AuthAPIDataContext.UserLogins.FindAsync(userInfo.UserGuid);
+                if(userLogin !=null)
+                {
+                    userLogin.isLogin = "Y"; //是否登入 Y=是 N=否
+                    userLogin.ModifyTime = DateTime.Now;
+
+                    _AuthAPIDataContext.UserLogins.Update(userLogin);
+                    await _AuthAPIDataContext.SaveChangesAsync();
+                }
+                else //從未登入過
+                {
+                    UserLogin newUserLogin = new UserLogin();
+                    newUserLogin.UserGuid = userInfo.UserGuid;
+                    newUserLogin.isLogin = "Y"; //是否登入 Y=是 N=否
+                    newUserLogin.CreateTime = DateTime.Now;
+                    newUserLogin.ModifyTime = DateTime.Now;
+
+                    await _AuthAPIDataContext.UserLogins.AddAsync(newUserLogin);
+                    await _AuthAPIDataContext.SaveChangesAsync();
+                }
+                #endregion 更新登入狀態
 
                 #region 回傳資料
                 result.StatusCode = ApiStatusCode.SUCCESS;
@@ -146,6 +170,55 @@ namespace AAAPI.Services
         }
         #endregion 登入
 
+        #region 註銷
+        /// <summary>
+        /// 使用者註銷
+        /// </summary>
+        /// <param name="userGuid"></param>
+        /// <returns></returns>
+        public async Task Revoked(string userGuid)
+        {
+            try
+            {
+                var userInfo = await _AuthAPIDataContext.UserInfos.FindAsync(Guid.Parse(userGuid));
+                if(userInfo != null)
+                {
+                    #region 更新使用者資訊
+                    userInfo.Status = "2"; //帳戶狀態1=有效 2=註銷
+                    userInfo.ModifyTime = DateTime.Now;
+
+                    _AuthAPIDataContext.UserInfos.Update(userInfo);
+                    #endregion
+
+                    #region 更新登入紀錄DB
+                    var userLogin = await _AuthAPIDataContext.UserLogins.FindAsync(Guid.Parse(userGuid));
+                    if(userLogin != null)
+                    {
+                        userLogin.isLogin = "N"; //是否登入 Y=是 N=否
+                        userLogin.ModifyTime = DateTime.Now;
+
+                        _AuthAPIDataContext.UserLogins.Update(userLogin);
+                    }
+                    #endregion
+                    
+                    await _AuthAPIDataContext.SaveChangesAsync();
+                }
+                else
+                {
+                    throw new APISysErrorException("使用者Guid不存在");
+                }
+            }
+            catch (APISysErrorException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation(ex, "註冊失敗");
+                throw;
+            }
+        }
+        #endregion 註冊
     }
 
 }
