@@ -30,14 +30,14 @@ namespace AuthAPI.Controllers
             _logger = logger;
         }
 
-        #region Register, 首頁註冊
+        #region Register, 註冊
         /// <summary>
-        /// 首頁註冊<br/>
+        /// 註冊<br/>
         /// </summary>
         /// <remarks>
         /// ==========================================================================<br/>
         /// {
-        ///     "UserName": "Randy",
+        ///     "UserName": "Test",
         ///     "UserAcct": "test0101",
         ///     "UserPass": "test0202"
         /// }
@@ -82,6 +82,75 @@ namespace AuthAPI.Controllers
 
         }
         #endregion
+
+        #region Login, 登入
+        /// <summary>
+        /// 登入<br/>
+        /// </summary>
+        /// <remarks>
+        /// ==========================================================================<br/>
+        /// ==========================================================================<br/>
+        /// </remarks>
+        /// <param name="rqObj"></param>
+        /// <returns></returns>
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public async Task<JsonResponse<LoginRs>> Login([Bind] LoginRq rqObj)
+        {
+            string statusCode = ApiStatusCode.ERR_EXCEPTION;
+            string statusDesc = "";
+            string prcDt = DateTime.Now.ToString("yyyy/MM/dd hh:mm:ss");
+            LoginRs rsObj = new LoginRs();
+            try
+            {
+
+                await checkLoginValid(rqObj);
+                if (!ModelState.IsValid)
+                {
+                    statusCode = ApiStatusCode.ERR_DATA_VALIDATE;
+                    return GetJsonResult<LoginRs>(ApiStatusCode.ERR_DATA_VALIDATE);
+                }
+
+                rsObj = await _IAuthService.UserLogin(rqObj);
+                if (rsObj != null && rsObj.StatusCode != "0")
+                {
+                    return GetJsonResult<LoginRs>(rsObj.StatusCode);
+                }
+                statusCode = ApiStatusCode.SUCCESS;
+
+                return GetJsonResult(rsObj, statusCode);
+            }
+            catch (APISysErrorException ASErr)
+            {
+                return GetJsonResult<LoginRs>(ASErr.StatusCode);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Login Error");
+                statusDesc = e.Message;
+                return GetJsonResult<LoginRs>(ApiStatusCode.ERR_EXCEPTION);
+            }
+            finally
+            {
+                // 寫 TransactionLog
+            }
+
+        }
+        #endregion
+
+        #region 檢核
+        private async Task checkLoginValid(LoginRq rqObj)
+        {
+            if (rqObj.UserAcct.Length < 8)
+            {
+                ModelState.AddModelError(rqObj.UserAcct, "帳號長度需大於等於8");
+            }
+            if (rqObj.UserPass.Length < 8)
+            {
+                ModelState.AddModelError(rqObj.UserPass, "密碼長度需大於等於8");
+            }
+        }
+        #endregion 檢核
 
     }
 }
