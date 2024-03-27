@@ -13,16 +13,7 @@ namespace CommonModule.Extensions
     /// </summary>
     public static class CommonExtensions
     {
-        /// <summary>
-        /// 判斷 IConfiguration, key 是否存在
-        /// </summary>
-        /// <param name="config"></param>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public static bool KeyExist(this IConfiguration config, string key)
-        {
-            return config.GetChildren().Any(item => item.Key == key);
-        }
+
 
         #region UseETopNetExceptionHandler, 例外處理器, 讓呼叫端能取得一致性的 json response
         /// <summary>
@@ -88,29 +79,5 @@ namespace CommonModule.Extensions
                 return language;
         }
 
-        #region 取得巢狀物件之實體ModelState名 （可能有bug在遇到陣列時）
-        public static string NameOfFull<T>(this T obj, Expression<Func<T, object>> expression)
-        {
-            var memberExpression = expression.Body as MemberExpression;
-            if (memberExpression == null)
-            {
-                var unaryExpression = expression.Body as UnaryExpression;
-                if (unaryExpression != null && unaryExpression.NodeType == ExpressionType.Convert)
-                    memberExpression = unaryExpression.Operand as MemberExpression;
-            }
-
-            var result = memberExpression != null ? memberExpression.ToString() : "";
-            result = result.Substring(result.IndexOf('.') + 1);
-
-            return result;
-        }
-
-        public static string NameOfFull<T>(this T obj, string sourceFieldName, Expression<Func<T, object>> expression)
-        {
-            var result = obj.NameOfFull<T>(expression);
-            result = string.IsNullOrEmpty(sourceFieldName) ? result : sourceFieldName + "." + result;
-            return result;
-        }
-        #endregion
     }
 }

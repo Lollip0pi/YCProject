@@ -9,6 +9,7 @@ namespace SqlEntitiesModule.Entities.YCDataBase.Table
         /// <summary>
         /// 使用者Guid
         /// </summary>
+        [Key]
 
         public Guid UserGuid { get; set; }
 

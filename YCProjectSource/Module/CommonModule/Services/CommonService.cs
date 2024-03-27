@@ -42,29 +42,54 @@ namespace Module.CommonModule.Services
             return codeDesc;
         }
         #endregion
-        #region Mapping Resource 查詢參數敘述
+        #region GetAllParamSettings, 取得所有ParamSetting代碼對應
         /// <summary>
-        /// Mapping Resource 查詢參數敘述
+        /// 取得所有ParamSetting代碼對應
         /// </summary>
-        public string MappingResource(string FuncType, string Param, string Code, string LocaleId, string DefaultDesc)
+        /// <returns></returns>
+        private async Task<List<ParamSetting>> GetParamSettings(string FuncType, string Param, string LocaleId)
         {
             try
             {
-                string result = _CommDataContext.ParamSettings.Where(m => m.FuncType == FuncType
-                    && m.Param == Param && m.Code == Code).AsNoTracking().FirstOrDefault().CodeDesc;
+                // 弱掃20230204 Privacy Violation
+                // _logger.LogInformation($"_localCache {Sanitizer.SanitizeLog(ALL_BANK_ParamSetting_KEY)} not exist !");
+                List<ParamSetting> allParamSettings = await _CommDataContext.ParamSettings.Where(m => m.FuncType == FuncType
+                && m.Param == Param).AsNoTracking().ToListAsync();
 
-                if(string.IsNullOrEmpty(result))
-                {
-                    result = "";
-                }
-
-                return result;
+                return allParamSettings;
             }
             catch (System.Exception)
             {
 
                 throw;
             }
+        }
+        #endregion
+        #region Mapping Resource 查詢參數敘述
+        /// <summary>
+        /// Mapping Resource 查詢參數敘述
+        /// </summary>
+        public string MappingResource(string FuncType, string Param, string Code, string LocaleId, string DefaultDesc)
+        {
+            string result = "";
+
+            var queryResult = GetParamSettings(FuncType, Param, LocaleId).Result.Where(m => m.Code == Code
+           ).FirstOrDefault();
+            if (queryResult != null)
+            {
+                result = !string.IsNullOrEmpty(queryResult.CodeDesc)
+                ? queryResult.CodeDesc
+                : string.IsNullOrEmpty(DefaultDesc)
+                ? Code : DefaultDesc;
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(DefaultDesc))
+                    result = Code;
+                else
+                    result = DefaultDesc;
+            }
+            return result;
         }
         #endregion
 

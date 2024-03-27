@@ -8,7 +8,7 @@ using Module.CommonModule.Services;
 using Module.CommonModule.Middleware;
 using CommonModule.Data;
 
-namespace eTOPNET.CommonModule.Common.Extensions
+namespace Module.CommonModule.Common.Extensions
 {
     public static class InitServiceExtension
     {
@@ -18,18 +18,17 @@ namespace eTOPNET.CommonModule.Common.Extensions
         /// </summary>
         /// <param name="services"></param>
         /// <param name="config"></param>
-        /// <param name="connectionString"></param>
+        /// <param name="YCDataBaseDB"></param>
         /// <returns></returns>
-        public static IServiceCollection AddCommonModuleServices(this IServiceCollection services, IConfiguration config, string ConnStr_Member)
+        public static IServiceCollection AddCommonModuleServices(this IServiceCollection services, IConfiguration config, string YCDataBaseDB)
         {
-            string connStr_member = config.GetConnectionString(ConnStr_Member);
-            services.AddDbContext<CommDataContext>(p => p.UseSqlServer(connStr_member));
+            string YCDataBase = config.GetConnectionString(YCDataBaseDB);
+            services.AddDbContext<CommDataContext>(p => p.UseSqlServer(YCDataBase));
             services.AddScoped<DbContext, CommDataContext>();
 
             services.AddScoped<ICommonService, CommonService>();
 
             List<Assembly> ass = new List<Assembly>();
-            // ass.Add(Assembly.GetAssembly(typeof(CommonProfile)));
             services.AddAutoMapper(ass);
             return services;
         }

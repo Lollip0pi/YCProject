@@ -62,7 +62,7 @@ namespace CommonModule.Middleware
             }
 
             bool xClientIDIsValid = false;
-            if (string.Compare(requestClientID, Enum.GetName(typeof(XClientIDType), XClientIDType.ShopWeb), true) == 0)
+            if (string.Compare(requestClientID, Enum.GetName(typeof(XClientIDType), XClientIDType.YCWeb), true) == 0)
                 xClientIDIsValid = true;
 
             if (xClientIDIsValid)

@@ -31,8 +31,7 @@ namespace Module.CommonModule.Controllers
         /// </summary>
         public enum XClientIDType
         {
-            ShopWeb,    //網頁
-            ShopAPP     //APP
+            YCWeb
         }
 
 
